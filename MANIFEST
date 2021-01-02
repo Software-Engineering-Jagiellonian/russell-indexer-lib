@@ -7,6 +7,7 @@ fregeindexerlib/crawl_result.py
 fregeindexerlib/database.py
 fregeindexerlib/database_connection.py
 fregeindexerlib/indexer.py
+fregeindexerlib/indexer_error.py
 fregeindexerlib/indexer_type.py
 fregeindexerlib/language.py
 fregeindexerlib/rabbitmq_connection.py

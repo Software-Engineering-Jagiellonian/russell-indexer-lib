@@ -12,6 +12,7 @@ from sqlalchemy import exc
 from fregeindexerlib.crawl_result import CrawlResult
 from fregeindexerlib.database import Database
 from fregeindexerlib.database_connection import DatabaseConnectionParameters
+from fregeindexerlib.indexer_error import IndexerError
 from fregeindexerlib.indexer_type import IndexerType
 from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
 
@@ -45,7 +46,14 @@ class Indexer(ABC):
 
                     self.before_crawl(last_crawled_id)
 
-                    crawl_result = self.crawl_next_repository(last_crawled_id)
+                    not_crawled = True
+                    while not_crawled:
+                        try:
+                            crawl_result = self.crawl_next_repository(last_crawled_id)
+                            not_crawled = False
+                        except IndexerError as exception:
+                            self.log.error(f'Indexer exception occur: {exception}. Retrying...')
+
                     if crawl_result is None:
                         self.log.info('There are no more repositories to crawl. Exiting.')
                         sys.exit(0)

@@ -1,0 +1,2 @@
+class IndexerError(Exception):
+    pass
