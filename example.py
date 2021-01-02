@@ -13,7 +13,9 @@ from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
 
 if __name__ == '__main__':
     class GitLabIndexer(Indexer):
-        def crawl_next_repository(self, prev_repository_id: Optional[str]) -> CrawlResult:
+        def crawl_next_repository(self, prev_repository_id: Optional[str]) -> Optional[CrawlResult]:
+            if prev_repository_id is not None and prev_repository_id == 30:
+                return None
             return CrawlResult(
                                str(
                                    int(prev_repository_id if prev_repository_id is not None else 7)+1
