@@ -46,6 +46,9 @@ class Indexer(ABC):
                     self.before_crawl(last_crawled_id)
 
                     crawl_result = self.crawl_next_repository(last_crawled_id)
+                    if crawl_result is None:
+                        self.log.info('There are no more repositories to crawl. Exiting.')
+                        sys.exit(0)
 
                     self.after_crawl(crawl_result)
 
@@ -134,12 +137,12 @@ class Indexer(ABC):
         return f"{self.indexer_type.value['id_prefix']}_{crawled_id}"
 
     @abstractmethod
-    def crawl_next_repository(self, prev_repository_id: Optional[str]) -> CrawlResult:
+    def crawl_next_repository(self, prev_repository_id: Optional[str]) -> Optional[CrawlResult]:
         """
         Method responsible for crawl a next repository
         :param prev_repository_id: last crawled repository ID (returned by API and passed to a CrawlResult) - may
-            be None if there was not previously crawled repositories
-        :return: filled CrawlResult
+            be None if there was not previously crawled repository
+        :return: filled CrawlResult or None if there are no more repository to crawl
         """
         pass
 
