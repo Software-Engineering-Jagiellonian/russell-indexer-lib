@@ -1,11 +1,11 @@
 from typing import Optional
 
-from indexer.crawl_result import CrawlResult
-from indexer.database_connection import DatabaseConnectionParameters
-from indexer.indexer import Indexer
-from indexer.indexer_type import IndexerType
-from indexer.language import Language
-from indexer.rabbitmq_connection import RabbitMQConnectionParameters
+from fregeindexerlib.crawl_result import CrawlResult
+from fregeindexerlib.database_connection import DatabaseConnectionParameters
+from fregeindexerlib.indexer import Indexer
+from fregeindexerlib.indexer_type import IndexerType
+from fregeindexerlib.language import Language
+from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
 
 """
     Usage example
@@ -33,9 +33,11 @@ if __name__ == '__main__':
                                 }
                                )
 
-    rabbit = RabbitMQConnectionParameters("172.17.0.2")
-    database = DatabaseConnectionParameters("172.17.0.3", "frege", "postgres", "password")
+    rabbit = RabbitMQConnectionParameters(host="172.17.0.2")
+    database = DatabaseConnectionParameters(host="172.17.0.3", database="frege",
+                                            username="postgres", password="password")
 
-    app = GitLabIndexer(IndexerType.GITLAB, rabbit, database, 10)
+    app = GitLabIndexer(indexer_type=IndexerType.GITLAB, rabbitmq_parameters=rabbit,
+                        database_parameters=database, rejected_publish_delay=10)
 
     app.run()

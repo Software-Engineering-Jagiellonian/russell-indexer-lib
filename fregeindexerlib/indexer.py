@@ -9,11 +9,11 @@ import time
 
 from sqlalchemy import exc
 
-from indexer.crawl_result import CrawlResult
-from indexer.database import Database
-from indexer.database_connection import DatabaseConnectionParameters
-from indexer.indexer_type import IndexerType
-from indexer.rabbitmq_connection import RabbitMQConnectionParameters
+from fregeindexerlib.crawl_result import CrawlResult
+from fregeindexerlib.database import Database
+from fregeindexerlib.database_connection import DatabaseConnectionParameters
+from fregeindexerlib.indexer_type import IndexerType
+from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
 
 
 class Indexer(ABC):
@@ -137,7 +137,7 @@ class Indexer(ABC):
     def crawl_next_repository(self, prev_repository_id: Optional[str]) -> CrawlResult:
         """
         Method responsible for crawl a next repository
-        :param prev_repository_id: last crawled repository ID (returned by API and passed to a CrawlResult) - might
+        :param prev_repository_id: last crawled repository ID (returned by API and passed to a CrawlResult) - may
             be None if there was not previously crawled repositories
         :return: filled CrawlResult
         """

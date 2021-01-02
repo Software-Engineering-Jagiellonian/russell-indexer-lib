@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from typing import Dict, Optional
 
-from indexer.language import Language
+from fregeindexerlib.language import Language
 
 
 @dataclass

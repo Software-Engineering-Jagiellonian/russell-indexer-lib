@@ -4,14 +4,13 @@ from typing import Optional
 from sqlalchemy import TIMESTAMP, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-
-from indexer.crawl_result import CrawlResult
-from indexer.database_connection import DatabaseConnectionParameters
-
 from sqlalchemy import create_engine, Column, Integer, String, Sequence, ForeignKey
 
-from indexer.indexer_type import IndexerType
-from indexer.language import Language
+from fregeindexerlib.crawl_result import CrawlResult
+from fregeindexerlib.database_connection import DatabaseConnectionParameters
+from fregeindexerlib.indexer_type import IndexerType
+from fregeindexerlib.language import Language
+
 
 Base = declarative_base()
 
