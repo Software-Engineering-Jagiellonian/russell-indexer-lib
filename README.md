@@ -1,18 +1,22 @@
 # Frege indexer library
 
-An indexer library for a Frege project as Jagiellonian University
+An indexer library for a Frege project at Jagiellonian University
 
 ## How to install
 
 This library is published in pip, so you should be able to install it by:
 
-> pip3 install fregeindexerlib
+`pip3 install fregeindexerlib`
+
+and upgrade by:
+
+`pip3 install fregeindexerlib --upgrade`
 
 ## How to use
 
 Example usage is available in file [example.py](example.py).
 
-Basically, you need to implement an abstract fregeindexerlib.indexer.Indexer class: to be more precise only a `crawl_next_repository` method is needed.
+Basically, you need to implement an abstract `fregeindexerlib.indexer.Indexer` class: to be more precise only a `crawl_next_repository` method is needed.
 
 List of methods that can be implemented:
 * `crawl_next_repository(self, prev_repository_id: Optional[str]) -> CrawlResult`
