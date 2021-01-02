@@ -1,6 +1,7 @@
 from fregeindexerlib.crawl_result import CrawlResult
 from fregeindexerlib.database_connection import DatabaseConnectionParameters
 from fregeindexerlib.indexer import Indexer
+from fregeindexerlib.indexer_error import IndexerError
 from fregeindexerlib.indexer_type import IndexerType
 from fregeindexerlib.language import Language
 from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
