@@ -18,7 +18,8 @@ from fregeindexerlib.rabbitmq_connection import RabbitMQConnectionParameters
 
 
 class Indexer(ABC):
-    QUEUE_NAME = "download"
+    DOWNLOADERS_QUEUE_NAME = "download"
+    REPOSITORY_ANALYZERS_QUEUE_NAME = "repository_statistics"
 
     def __init__(self, indexer_type: IndexerType, rabbitmq_parameters: RabbitMQConnectionParameters,
                  database_parameters: DatabaseConnectionParameters, rejected_publish_delay: int):
@@ -37,10 +38,11 @@ class Indexer(ABC):
 
         while True:
             try:
-                rmq_connection, channel = self._connect_to_rabbitmq()
+                rmq_connection, downloaders_channel, repository_analyzers_channel = self._connect_to_rabbitmq()
                 self._connect_to_database(database)
                 while True:
-                    message_to_sent = True
+                    downloadres_message_to_sent = True
+                    repository_analyzers_message_to_sent = True
 
                     last_crawled_id = database.get_last_crawled_id()
 
@@ -60,29 +62,46 @@ class Indexer(ABC):
 
                     self.after_crawl(crawl_result)
 
-                    payload = self._prepare_downloader_message(crawl_result)
+                    downloaders_payload = self._prepare_downloader_message(crawl_result)
+                    repository_analyzers_payload = self._prepare_repository_analyzer_message(crawl_result)
 
-                    while message_to_sent:
+                    while downloadres_message_to_sent:
                         try:
-                            channel.basic_publish(exchange='',
-                                                  routing_key=self.QUEUE_NAME,
-                                                  properties=pika.BasicProperties(
-                                                      delivery_mode=2,  # make message persistent
-                                                  ),
-                                                  body=payload)
-                            self.log.debug("Message was received by RabbitMQ")
+                            downloaders_channel.basic_publish(exchange='',
+                                                              routing_key=self.DOWNLOADERS_QUEUE_NAME,
+                                                              properties=pika.BasicProperties(
+                                                                  delivery_mode=2,  # make message persistent
+                                                              ),
+                                                              body=downloaders_payload)
+                            self.log.debug("Message for downloaders has been received by RabbitMQ")
 
                             database.save_crawl_result(crawl_result, self._create_repo_id(crawl_result.id))
-                            self.log.debug("Crawl result saved into database")
+                            self.log.debug("Crawl result has been saved into a database")
 
                             database.save_last_crawled_id(crawl_result.id)
-                            self.log.debug("Last crawled id saved into database")
+                            self.log.debug("Last crawled id has been saved into a database")
+
+                            downloadres_message_to_sent = False
+                        except pika.exceptions.NackError:
+                            self.log.debug(f"Message for downloaders was REJECTED by RabbitMQ (queue full?). "
+                                           f"Retrying in {self.rejected_publish_delay}s")
+                            time.sleep(self.rejected_publish_delay)
+
+                    while repository_analyzers_message_to_sent:
+                        try:
+                            repository_analyzers_channel.basic_publish(exchange='',
+                                                                       routing_key=self.REPOSITORY_ANALYZERS_QUEUE_NAME,
+                                                                       properties=pika.BasicProperties(
+                                                                           delivery_mode=2,  # make message persistent
+                                                                       ),
+                                                                       body=repository_analyzers_payload)
+                            self.log.debug("Message for repository analyzers has been received by RabbitMQ")
 
                             self.on_successful_process(crawl_result)
 
-                            message_to_sent = False
+                            repository_analyzers_message_to_sent = False
                         except pika.exceptions.NackError:
-                            self.log.debug(f"Message was REJECTED by RabbitMQ (queue full?). "
+                            self.log.debug(f"Message for repository analyzers was REJECTED by RabbitMQ (queue full?). "
                                            f"Retrying in {self.rejected_publish_delay}s")
                             time.sleep(self.rejected_publish_delay)
 
@@ -109,11 +128,14 @@ class Indexer(ABC):
                               f"{self.rabbitmq_parameters.port})...")
                 rmq_connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.rabbitmq_parameters.host,
                                                                                    port=self.rabbitmq_parameters.port))
-                channel = rmq_connection.channel()
+                downloaders_channel = rmq_connection.channel()
+                repository_analyzers_channel = rmq_connection.channel()
                 self.log.info("Connected to RabbitMQ")
-                channel.confirm_delivery()
-                channel.queue_declare(queue=self.QUEUE_NAME, durable=True)
-                return rmq_connection, channel
+                downloaders_channel.confirm_delivery()
+                downloaders_channel.queue_declare(queue=self.DOWNLOADERS_QUEUE_NAME, durable=True)
+                repository_analyzers_channel.confirm_delivery()
+                repository_analyzers_channel.queue_declare(queue=self.REPOSITORY_ANALYZERS_QUEUE_NAME, durable=True)
+                return rmq_connection, downloaders_channel, repository_analyzers_channel
             except pika.exceptions.AMQPConnectionError as exception:
                 self.log.error(f"AMQP Connection Error: {exception}")
                 time.sleep(5)
@@ -139,6 +161,12 @@ class Indexer(ABC):
         if crawl_result.languages is not None:
             message['languages'] = [language.value for language in crawl_result.languages.keys()]
 
+        return bytes(json.dumps(message), encoding='utf-8')
+
+    def _prepare_repository_analyzer_message(self, crawl_result: CrawlResult) -> bytes:
+        message = {
+            "repo_id": self._create_repo_id(crawl_result.id),
+        }
         return bytes(json.dumps(message), encoding='utf-8')
 
     def _create_repo_id(self, crawled_id: str):
