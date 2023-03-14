@@ -1,6 +1,6 @@
-# Frege indexer library
+# Russell indexer library
 
-An indexer library for a Frege project at Jagiellonian University
+An indexer library for a Russell project at Jagiellonian University
 
 ## How to install
 
